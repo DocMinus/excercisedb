@@ -3,6 +3,7 @@
 Python >= 3.9<br>
 sqlalchemy<br>
 eventually dash, currently though only using the commandline.<br>
+"old-school text GUI" :D <br>
 
 ##
 database model & build:<br>
@@ -15,10 +16,9 @@ passwordtest.py and dashapp.py are not functional/usable at this stage and might
 After all, it's just for fun and practicing.<br>
 (folder "regular_sql_not_alchemy" contains some earlier test scripts using raw sql commands)<br>
 ## info
-with some help of chatgpt<br>
-and with arjancodes<br>
-https://www.youtube.com/watch?v=x1fCJ7sUXCM<br>
+with some initial help of chatgpt and a bit with arjancodes https://www.youtube.com/watch?v=x1fCJ7sUXCM<br>
 ## Updates
-Latest Version 2023-06-03<br>
+Latest Version 2023-06-06<br>
+Added some more functions/changed the "GUI", added some documentation to the functions<br>
 License: MIT
 

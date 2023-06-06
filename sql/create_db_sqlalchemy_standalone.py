@@ -59,7 +59,7 @@ class ExerciseSet(Base):
 
 
 # creating the db
-engine = create_engine("sqlite:///database/exercise_alchemy_log_test.db")
+engine = create_engine("sqlite:///database/exercise_main.db")
 Base.metadata.create_all(engine)
 
 # creating the exercise types

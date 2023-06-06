@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 if "Base" not in locals():
     Base = declarative_base()
 
-engine = create_engine("sqlite:///database/exercise_alchemy_log_test.db")
+engine = create_engine("sqlite:///database/exercise_main.db")
 
 # Define a Session class
 Session = sessionmaker(bind=engine)
