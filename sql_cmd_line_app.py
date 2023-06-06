@@ -8,7 +8,8 @@ from src.db_classes import *
 
 # Initialize the database #
 # TODO this would have to be moved eventually but ok for now
-engine = create_engine("sqlite:///database/exercise_alchemy_log_test copy.db")
+# engine = create_engine("sqlite:///database/exercise_main.db")
+engine = create_engine("sqlite:///database/exercise_testing.db")
 Session = sessionmaker(bind=engine)
 
 # Get the list of users from the database
@@ -270,7 +271,9 @@ def create_excercise_day(excercise_id: int) -> bool:
     Boolean (True if an exercise was added, False otherwise)
     """
 
-    if excercise_id == 0:
+    if (
+        excercise_id == 0
+    ):  # now we don't acutally receive 0 so actually not necessary. but doesn't hurt.
         return False
 
     notes = input("Enter any notes: ")
@@ -288,9 +291,13 @@ def create_excercise_day(excercise_id: int) -> bool:
         set_details.append([repetitions, weight])
         set_number += 1
 
-    print("Saving the following details:")
-    save_exercise(excercise_id, notes, date, set_details)
-    return True
+    if set_number == 1:
+        print("No sets entered, exiting.")
+        return False
+    else:
+        print("Saving Excercise to db.")
+        save_exercise(excercise_id, notes, date, set_details)
+        return True
 
 
 def gui_main() -> int:
@@ -346,11 +353,11 @@ def main():
         menu_selection_id = gui_main()
         if menu_selection_id == 9:
             gui_weight()
-        else:
-            status = create_excercise_day(menu_selection_id)
-            if status is False:
-                print("Exiting...")
-                break
+        if menu_selection_id == 0:
+            print("Exiting...")
+            break
+        elif menu_selection_id > 0 and menu_selection_id < 7:
+            create_excercise_day(menu_selection_id)
 
 
 if __name__ == "__main__":
