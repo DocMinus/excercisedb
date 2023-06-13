@@ -9,7 +9,7 @@ from src.db_classes import *
 # Initialize the database #
 # TODO this would have to be moved eventually but ok for now
 # engine = create_engine("sqlite:///database/exercise_main.db")
-engine = create_engine("sqlite:///database/exercise_testing.db")
+engine = create_engine("sqlite:///database/exercise_main.db")
 Session = sessionmaker(bind=engine)
 
 # Get the list of users from the database
@@ -264,6 +264,35 @@ def get_latest_weight(user_id: int) -> float:
         return None
 
 
+def combined_weight_total_over_time(user_id: int) -> None:
+    """sum of all weights lifted by a user since first entry"""
+
+    session = Session()
+
+    # Calculate the total weight lifted
+    total_weight = (
+        session.query(func.sum(ExerciseSet.repetitions * ExerciseSet.weight))
+        .join(Exercise, ExerciseSet.exercise_id == Exercise.id)
+        .filter(Exercise.user_id == user_id)
+        .scalar()
+    )
+
+    # Find the date of the first entry
+    first_date = (
+        session.query(func.min(Exercise.date_performed))
+        .filter(Exercise.user_id == user_id)
+        .scalar()
+    )
+
+    # Close the session
+    session.close()
+
+    # Print the total weight lifted and the date since when
+    print(f"Since {first_date}, you lifted a combined total of {total_weight} kg!")
+
+    return None
+
+
 def create_excercise_day(excercise_id: int) -> bool:
     """
     Interactively collects exercise data from the user and writes it to the database. \n
@@ -310,6 +339,7 @@ def gui_main() -> int:
     print(f"Welcome {user_name}!")
     print(f"Current Date/Time: {datetime.datetime.now()}")
     print(f"Latest recorded Weight: {get_latest_weight(user_id)}")
+    combined_weight_total_over_time(user_id)
     print("\n-------------------\n")
 
     print("your latest exercises:")
