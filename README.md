@@ -27,7 +27,8 @@ After all, it's just for fun and practicing.<br>
 ## info
 with some initial help of chatgpt and a bit with arjancodes https://www.youtube.com/watch?v=x1fCJ7sUXCM<br>
 ## Updates
-Latest Version 2023-06-13<br>
+Latest Version 2023-06-23<br>
 Added some more functions/changed the "GUI", added some documentation to the functions; added a "combined_weight_total_over_time", and more info on installation.<br>
+Gald midsommer - with the help of some beer I started on a dash variant, see file sql_web_app.py. It's not really functional with input/write, but it reads at least some stuff.<br>
 License: MIT
 
