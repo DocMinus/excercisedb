@@ -1,6 +1,12 @@
+"""V0.0.2"""
+
 import datetime
 
+import dash
+import dash_bootstrap_components as dbc
 import pandas as pd
+from dash import Input, Output, State, ctx, dash_table, dcc, html
+from dash.exceptions import PreventUpdate
 from sqlalchemy import create_engine, desc, func
 from sqlalchemy.orm import sessionmaker
 
@@ -112,6 +118,10 @@ def write_user_weight(
     Returns:
     None
     """
+
+    # of note: decided against overwriting weights on same day.
+    # aside from dumb entries, one might want to have multiple weights on same day after all
+
     # Create a new session
     session = Session()
 
@@ -264,36 +274,6 @@ def get_latest_weight(user_id: int) -> float:
         return None
 
 
-# def combined_weight_total_over_time(user_id: int) -> None:
-#     """sum of all weights lifted by a user since first entry"""
-
-#     session = Session()
-
-#     # Calculate the total weight lifted
-#     total_weight = (
-#         session.query(func.sum(ExerciseSet.repetitions * ExerciseSet.weight))
-#         .join(Exercise, ExerciseSet.exercise_id == Exercise.id)
-#         .filter(Exercise.user_id == user_id)
-#         .scalar()
-#     )
-
-#     # Find the date of the first entry
-#     first_date = (
-#         session.query(func.min(Exercise.date_performed))
-#         .filter(Exercise.user_id == user_id)
-#         .scalar()
-#     )
-
-#     # Close the session
-#     session.close()
-
-#     # Print the total weight lifted and the date since when
-#     print(
-#         f"Fun fact: Since {first_date}, you lifted a combined total of {total_weight} kg!"
-#     )
-
-
-#     return None
 def combined_weight_total_over_time(user_id: int) -> str:
     """sum of all weights lifted by a user since first entry"""
 
@@ -357,111 +337,85 @@ def create_excercise_day(excercise_id: int) -> bool:
         return True
 
 
-def gui_main() -> int:
-    """
-    The main "GUI" function that runs the program.\n
+#################################################################################################################
+# Dash App
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.CYBORG],
+    suppress_callback_exceptions=True,
+)
 
-    Returns: None
-    """
-    print("\n-------------------\n")
-    print(f"Welcome {user_name}!")
-    print(f"Current Date/Time: {datetime.datetime.now()}")
-    print(f"Latest recorded Weight: {get_latest_weight(user_id)}")
-    print(combined_weight_total_over_time(user_id))
-    print("\n-------------------\n")
-
-    print("your latest exercises:")
-    print(get_latest_exercises(user_id))
-    print("\n-------------------\n")
-    print("your PBs:")
-    print(get_personal_best(user_id))
-    print("\n-------------------\n")
-
-    print("Please choose excercise by ID or 0/9 to exit or upate your weight:")
-    print("id\ttype")
-    excercises = get_exercise_types()
-    print("0\tExit")
-    for i in excercises:
-        print(i.id, "\t", i.type)
-    print("9\tUpdate your weight")
-    print("\n-------------------\n")
-
-    menu_selection_id = int(input("\nEnter a number: "))
-    return menu_selection_id
-
-
-def gui_weight() -> None:
-    """
-    Prompts the user to input their weight and the date the weight was recorded.
-    Then write to the db via the write_user_weight function. \n
-
-    Returns: None
-    """
-    user_weight = float(input("\nEnter your weight: "))
-    new_weight_date = input("Enter the date (YYYY-MM-DD) (empty=today): ")
-    if new_weight_date == "":
-        new_weight_date = datetime.date.today()
-    write_user_weight(user_id, user_weight, new_weight_date)
-
-
-# def main():
-#     # yes, global not good pracice, but for this testing purpose deemed ok
-#     global user_id
-#     while True:
-#         menu_selection_id = gui_main()
-#         if menu_selection_id == 9:
-#             gui_weight()
-#         if menu_selection_id == 0:
-#             print("Exiting...")
-#             break
-#         elif menu_selection_id > 0 and menu_selection_id < 7:
-#             create_excercise_day(menu_selection_id)
-
-
-# if __name__ == "__main__":
-#     main()
-
-
-import dash
-from dash import Input, Output, dcc, html
-
-app = dash.Dash(__name__)
-
-# Defining the layout of the app
 app.layout = html.Div(
     [
         html.H1(f"Welcome {user_name}!"),
-        html.H2(
+        html.H3(
             f"Current Date/Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ; press F5 to refresh."
         ),
-        html.H3(combined_weight_total_over_time(user_id)),
+        html.H4(combined_weight_total_over_time(user_id)),
+        html.H4(f"Your latest weight (by date): {get_latest_weight(user_id)}"),
         html.Hr(),
-        html.H3(f"Your latest recorded weight: {get_latest_weight(user_id)}"),
-        html.Button("Update your weight", id="update-weight-button", n_clicks=0),
+        html.Div(
+            [
+                html.Label("Update Weight (kg)"),
+                dcc.Input(id="weight-input", type="number", value=""),
+                html.Label("Date"),
+                dcc.DatePickerSingle(
+                    id="weightdate-input",
+                    min_date_allowed=datetime.datetime(1999, 9, 9),
+                    max_date_allowed=datetime.datetime.now(),
+                    initial_visible_month=datetime.datetime.now(),
+                ),
+                html.Button("Submit", id="update-weight-button"),
+            ]
+        ),
         html.Hr(),
+        html.H2("Your 5 Latest Exercises"),
+        dash_table.DataTable(
+            id="exercise-table",
+            columns=[
+                {"name": i, "id": i} for i in get_latest_exercises(user_id).columns
+            ],
+            data=get_latest_exercises(user_id).to_dict("records"),
+        ),
+        html.Hr(),
+        # TODO work on this portion. For now not yet functional.
         # Placeholder for displaying exercise data
         html.Div(id="exercise-data"),
         # Dropdown menu for exercise selection
         dcc.Dropdown(
             id="exercise-dropdown",
             options=[{"label": i.type, "value": i.id} for i in get_exercise_types()],
-            placeholder="Select an exercise",
+            placeholder="Select an exercise to add data for...",
         ),
     ]
 )
 
 
-# Define another callback for the weight update button
 @app.callback(
-    Output("weight-output", "children"),
+    Output("update-weight-button", "n_clicks"),
     Input("update-weight-button", "n_clicks"),
+    State("weight-input", "value"),
+    State("weightdate-input", "date"),
 )
-def update_weight(n):
-    # Assuming you have a function update_weight that does the weight updating
-    # new_weight = write_user_weight(user_id)
-    # return f"New weight: {new_weight}"
-    print("update weight button clicked")
-    return f"New weight: {get_latest_weight(user_id)}"
+def update_weight(n_clicks, new_weight, new_weight_date):
+    n_clicks = n_clicks if n_clicks is not None else 0
+    if n_clicks < 1:
+        raise PreventUpdate
+
+    # if weightdate-input is empty, use today's date
+    if new_weight_date is None:
+        new_weight_date = datetime.date.today()
+    else:
+        new_weight_date = datetime.datetime.strptime(new_weight_date, "%Y-%m-%d").date()
+
+    if new_weight is None or new_weight == 0:
+        print("No weight input")
+        raise PreventUpdate
+    else:
+        print(f"Updating weight {new_weight} kg on date {new_weight_date}")
+        write_user_weight(user_id, new_weight, new_weight_date)
+
+    raise PreventUpdate
 
 
 # Defining a callback for updating exercise data when a new exercise is selected
@@ -483,4 +437,4 @@ def update_exercise_data(selected_exercise_id):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=8069)

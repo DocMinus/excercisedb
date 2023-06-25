@@ -1,3 +1,7 @@
+# 'frozen' version of sql_cmd_line_app.py
+# might, or might not, continue working on this.
+# dash app is priority
+
 import datetime
 
 import pandas as pd

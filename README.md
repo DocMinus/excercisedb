@@ -21,14 +21,14 @@ run from sql folder:<br>
 Edit the create code manually at this point to add a new user.<br>
 Finally, run the `sql_cmd_line_app.py` which contains a GUI to write gym excercising info for a (single) user.<br>
 <br>
-passwordtest.py and dashapp.py are not functional/usable at this stage and might never be? TBD.<br>
+passwordtest.py is not functional/usable at this stage and might never be? TBD.<br>
 After all, it's just for fun and practicing.<br>
 (folder "regular_sql_not_alchemy" contains some earlier test scripts using raw sql commands)<br>
 ## info
 with some initial help of chatgpt and a bit with arjancodes https://www.youtube.com/watch?v=x1fCJ7sUXCM<br>
 ## Updates
-Latest Version 2023-06-23<br>
-Added some more functions/changed the "GUI", added some documentation to the functions; added a "combined_weight_total_over_time", and more info on installation.<br>
-Gald midsommer - with the help of some beer I started on a dash variant, see file sql_web_app.py. It's not really functional with input/write, but it reads at least some stuff.<br>
+Latest Version 2023-06-25<br>
+cmd line gui app - currently in a "locked" state. Will focus now on the web-app<br>
+sql_web_app.py: weight input & date now functional. started with a version number.<br>
 License: MIT
 
