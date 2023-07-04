@@ -31,5 +31,6 @@ Latest Version 2023-07-04<br>
 cmd line gui app - currently in a "locked" state. Will focus now on the web-app<br>
 sql_web_app.py: weight input & date now functional. started with a version number.<br>
 excercise data can now be entered. table (and body weight) view not dynamic yet.<br>
+added a intervall timer to update the view<br>
 License: MIT
 

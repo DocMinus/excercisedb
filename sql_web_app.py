@@ -1,4 +1,4 @@
-"""V0.0.5"""
+"""V0.1.0"""
 
 import datetime
 
@@ -347,12 +347,15 @@ app = dash.Dash(
 
 app.layout = html.Div(
     [
-        html.H1(f"Welcome {user_name}!"),
-        html.H3(
-            f"Current Date/Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ; press F5 to refresh."
+        dcc.Interval(
+            id="interval-component",
+            interval=10 * 1000,
+            n_intervals=0,  # in milliseconds
         ),
-        html.H4(combined_weight_total_over_time(user_id)),
-        html.H4(f"Your latest weight (by date): {get_latest_weight(user_id)}"),
+        html.H1(f"Welcome {user_name}!"),
+        html.H3(id="current-datetime"),
+        html.H4(id="combined-weight-total"),
+        html.H4(id="latest-weight"),
         html.Hr(),
         html.Div(
             [
@@ -374,11 +377,6 @@ app.layout = html.Div(
                 html.H4("Your 5 Latest Exercises"),
                 dash_table.DataTable(
                     id="exercise-table",
-                    columns=[
-                        {"name": i, "id": i}
-                        for i in get_latest_exercises(user_id).columns
-                    ],
-                    data=get_latest_exercises(user_id).to_dict("records"),
                 ),
             ],
             style={
@@ -387,7 +385,6 @@ app.layout = html.Div(
             },
         ),
         html.Hr(),
-        # TODO work on this portion. For now not yet functional.
         # Placeholder for displaying exercise data
         html.Div(
             [
@@ -406,9 +403,44 @@ app.layout = html.Div(
                 "margin": "0 auto",  # centers the div
             },
         ),
-        html.Div(id="submit-output"),
     ]
 )
+
+
+# Intervall Update current date/time
+@app.callback(
+    Output("current-datetime", "children"), Input("interval-component", "n_intervals")
+)
+def update_current_datetime(n):
+    return f"Current Date/Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}."
+
+
+# Intervall Update combined weight total
+@app.callback(
+    Output("combined-weight-total", "children"),
+    Input("interval-component", "n_intervals"),
+)
+def update_combined_weight_total(n):
+    return combined_weight_total_over_time(user_id)
+
+
+# Intervall Update latest weight
+@app.callback(
+    Output("latest-weight", "children"), Input("interval-component", "n_intervals")
+)
+def update_latest_weight(n):
+    return f"Your latest weight (by date): {get_latest_weight(user_id)}"
+
+
+# Intervall Update latest exercises
+@app.callback(
+    Output("exercise-table", "data"),
+    Output("exercise-table", "columns"),
+    Input("interval-component", "n_intervals"),
+)
+def update_latest_exercises(n):
+    df = get_latest_exercises(user_id)
+    return df.to_dict("records"), [{"name": i, "id": i} for i in df.columns]
 
 
 @app.callback(
@@ -468,7 +500,6 @@ def input_exercise_data(selected_exercise_id):
 
 @app.callback(
     [
-        Output("submit-output", "children"),
         Output("date-input", "value"),
         Output("notes-input", "value"),
         Output("reps-input", "value"),
@@ -498,12 +529,11 @@ def process_exercise_data(n_clicks, selected_exercise_id, date, notes, reps, wei
                     None,
                     None,
                     None,
-                    None,
                 )
 
         # make sure reps and weights are not None
         if reps is None or weights is None:
-            return "Please enter valid reps and weights.", None, None, None, None
+            return "Please enter valid reps and weights.", None, None, None
 
         # parse the reps and weights
         try:
@@ -515,12 +545,11 @@ def process_exercise_data(n_clicks, selected_exercise_id, date, notes, reps, wei
                 None,
                 None,
                 None,
-                None,
             )
 
         # make sure the number of reps matches the number of weights
         if len(reps) != len(weights):
-            return "Mismatch in the number of reps and weights.", None, None, None, None
+            return "Mismatch in the number of reps and weights.", None, None, None
 
         # create set_details
         set_details = list(zip(reps, weights))
@@ -530,7 +559,6 @@ def process_exercise_data(n_clicks, selected_exercise_id, date, notes, reps, wei
 
         # clear the inputs and return the success message
         return (
-            "Exercise data has been submitted. Updating the database...",
             "",
             "",
             "",
