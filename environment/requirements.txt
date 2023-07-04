@@ -1,2 +1,5 @@
 sqlalchemy
 pandas
+dash
+dash-bootstrap-components
+plotly

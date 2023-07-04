@@ -6,7 +6,7 @@ Run the two commands from the root directory.
 
 ```shell
 conda env create -f ./environment/conda.yaml
-conda activate py311chemdash
+conda activate excercisedb
 ```
 
 ## Installation with Pip
@@ -19,9 +19,5 @@ Run the command from the root directory
 python -m pip install -r ./environment/requirements.txt
 ```
 
-## Problems with Windows install
-dash-bio might give an install error due to parmed error. The latter requires MS Visual C++14.0 or greater.<br>
-https://visualstudio.microsoft.com/visual-cpp-build-tools <br>
-After that, rerun the above install again.
 
 
