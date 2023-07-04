@@ -1,7 +1,7 @@
-# Heavy Weight (compound excercises) database
+# Heavy Weight (compound excercises) database app (Python, Plotly Dash)
 ## requirements / installation
 Python >= 3.9<br>
-sqlalchemy<br>
+sqlalchemy, dash & it's bootstrap<br>
 <br>
 You can use the info from the environment folder:
 ```shell
