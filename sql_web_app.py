@@ -1,4 +1,4 @@
-"""V0.0.2"""
+"""V0.0.5"""
 
 import datetime
 
@@ -50,7 +50,7 @@ def get_latest_exercises(user_id: int) -> pd.DataFrame:
     session.close()
 
     # Convert the result to a pandas DataFrame
-    df = pd.DataFrame(exercises, columns=["date", "exercise_type"])
+    df = pd.DataFrame(exercises, columns=["Date", "Exercise Type"])
 
     return df
 
@@ -369,24 +369,44 @@ app.layout = html.Div(
             ]
         ),
         html.Hr(),
-        html.H2("Your 5 Latest Exercises"),
-        dash_table.DataTable(
-            id="exercise-table",
-            columns=[
-                {"name": i, "id": i} for i in get_latest_exercises(user_id).columns
+        html.Div(
+            [
+                html.H4("Your 5 Latest Exercises"),
+                dash_table.DataTable(
+                    id="exercise-table",
+                    columns=[
+                        {"name": i, "id": i}
+                        for i in get_latest_exercises(user_id).columns
+                    ],
+                    data=get_latest_exercises(user_id).to_dict("records"),
+                ),
             ],
-            data=get_latest_exercises(user_id).to_dict("records"),
+            style={
+                "width": "30%",
+                "margin": "0 auto",  # centers the div
+            },
         ),
         html.Hr(),
         # TODO work on this portion. For now not yet functional.
         # Placeholder for displaying exercise data
-        html.Div(id="exercise-data"),
-        # Dropdown menu for exercise selection
-        dcc.Dropdown(
-            id="exercise-dropdown",
-            options=[{"label": i.type, "value": i.id} for i in get_exercise_types()],
-            placeholder="Select an exercise to add data for...",
+        html.Div(
+            [
+                html.Div(id="exercise-data"),
+                # Dropdown menu for exercise selection
+                dcc.Dropdown(
+                    id="exercise-dropdown",
+                    options=[
+                        {"label": i.type, "value": i.id} for i in get_exercise_types()
+                    ],
+                    placeholder="Select an exercise to add data for...",
+                ),
+            ],
+            style={
+                "width": "30%",
+                "margin": "0 auto",  # centers the div
+            },
         ),
+        html.Div(id="submit-output"),
     ]
 )
 
@@ -418,22 +438,104 @@ def update_weight(n_clicks, new_weight, new_weight_date):
     raise PreventUpdate
 
 
-# Defining a callback for updating exercise data when a new exercise is selected
 @app.callback(
     Output("exercise-data", "children"),
     Input("exercise-dropdown", "value"),
 )
-def update_exercise_data(selected_exercise_id):
-    # Fetch the exercise data for the selected exercise
-    exercise_data = get_exercise_data(selected_exercise_id)
+def input_exercise_data(selected_exercise_id):
+    if selected_exercise_id is None:
+        raise dash.exceptions.PreventUpdate
+    else:
+        return html.Div(
+            [
+                html.H5(f"You selected exercise ID: {selected_exercise_id}"),
+                html.Label(
+                    "Enter the date of exercise (YYYY-MM-DD, leave blank for today):"
+                ),
+                dcc.Input(id="date-input", type="text", placeholder="YYYY-MM-DD"),
+                html.Label("Enter any notes you have for this exercise session:"),
+                dcc.Input(id="notes-input", type="text"),
+                html.Label(
+                    "Enter the number of reps for each set, separated by commas:"
+                ),
+                dcc.Input(id="reps-input", type="text"),
+                html.Label("Enter the weight used for each set, separated by commas:"),
+                dcc.Input(id="weight-input", type="text"),
+                html.Button("Submit exercise data", id="submit-exercise-button"),
+            ]
+        )
 
-    # Convert the data into a table using Dash's DataTable component
-    exercise_table = dcc.DataTable(
-        data=exercise_data.to_dict("records"),
-        columns=[{"name": i, "id": i} for i in exercise_data.columns],
-    )
 
-    return exercise_table
+@app.callback(
+    [
+        Output("submit-output", "children"),
+        Output("date-input", "value"),
+        Output("notes-input", "value"),
+        Output("reps-input", "value"),
+        Output("weight-input", "value"),
+    ],
+    Input("submit-exercise-button", "n_clicks"),
+    State("exercise-dropdown", "value"),
+    State("date-input", "value"),
+    State("notes-input", "value"),
+    State("reps-input", "value"),
+    State("weight-input", "value"),
+)
+def process_exercise_data(n_clicks, selected_exercise_id, date, notes, reps, weights):
+    if n_clicks is None:
+        raise dash.exceptions.PreventUpdate
+    else:
+        # if date is empty, use today's date
+        if not date:
+            date = datetime.date.today()
+        else:
+            # validate and parse the date
+            try:
+                date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+            except ValueError:
+                return (
+                    "Invalid date format. Please use YYYY-MM-DD.",
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+
+        # make sure reps and weights are not None
+        if reps is None or weights is None:
+            return "Please enter valid reps and weights.", None, None, None, None
+
+        # parse the reps and weights
+        try:
+            reps = [int(rep) for rep in reps.split(",")]
+            weights = [float(weight) for weight in weights.split(",")]
+        except ValueError:
+            return (
+                "Invalid reps or weights format. Please use comma-separated values.",
+                None,
+                None,
+                None,
+                None,
+            )
+
+        # make sure the number of reps matches the number of weights
+        if len(reps) != len(weights):
+            return "Mismatch in the number of reps and weights.", None, None, None, None
+
+        # create set_details
+        set_details = list(zip(reps, weights))
+
+        # call your function to store exercise data in the database
+        save_exercise(selected_exercise_id, notes, date, set_details)
+
+        # clear the inputs and return the success message
+        return (
+            "Exercise data has been submitted. Updating the database...",
+            "",
+            "",
+            "",
+            "",
+        )
 
 
 if __name__ == "__main__":

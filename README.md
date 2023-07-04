@@ -27,8 +27,9 @@ After all, it's just for fun and practicing.<br>
 ## info
 with some initial help of chatgpt and a bit with arjancodes https://www.youtube.com/watch?v=x1fCJ7sUXCM<br>
 ## Updates
-Latest Version 2023-06-25<br>
+Latest Version 2023-07-04<br>
 cmd line gui app - currently in a "locked" state. Will focus now on the web-app<br>
 sql_web_app.py: weight input & date now functional. started with a version number.<br>
+excercise data can now be entered. table (and body weight) view not dynamic yet.<br>
 License: MIT
 
