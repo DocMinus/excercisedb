@@ -1,4 +1,4 @@
-"""V0.1.0"""
+"""V0.1.1"""
 
 import datetime
 
@@ -365,7 +365,7 @@ app.layout = html.Div(
                 dcc.DatePickerSingle(
                     id="weightdate-input",
                     min_date_allowed=datetime.datetime(1999, 9, 9),
-                    max_date_allowed=datetime.datetime.now(),
+                    max_date_allowed=datetime.datetime.today(),
                     initial_visible_month=datetime.datetime.now(),
                 ),
                 html.Button("Submit", id="update-weight-button"),
@@ -481,10 +481,13 @@ def input_exercise_data(selected_exercise_id):
         return html.Div(
             [
                 html.H5(f"You selected exercise ID: {selected_exercise_id}"),
-                html.Label(
-                    "Enter the date of exercise (YYYY-MM-DD, leave blank for today):"
+                html.Label("Enter the date of exercise (leave blank for today):"),
+                dcc.DatePickerSingle(
+                    id="date-input",
+                    min_date_allowed=datetime.datetime(1999, 9, 9),
+                    max_date_allowed=datetime.datetime.today(),
+                    initial_visible_month=datetime.datetime.now(),
                 ),
-                dcc.Input(id="date-input", type="text", placeholder="YYYY-MM-DD"),
                 html.Label("Enter any notes you have for this exercise session:"),
                 dcc.Input(id="notes-input", type="text"),
                 html.Label(
@@ -500,14 +503,14 @@ def input_exercise_data(selected_exercise_id):
 
 @app.callback(
     [
-        Output("date-input", "value"),
+        Output("date-input", "date"),
         Output("notes-input", "value"),
         Output("reps-input", "value"),
         Output("weight-input", "value"),
     ],
     Input("submit-exercise-button", "n_clicks"),
     State("exercise-dropdown", "value"),
-    State("date-input", "value"),
+    State("date-input", "date"),
     State("notes-input", "value"),
     State("reps-input", "value"),
     State("weight-input", "value"),
@@ -519,37 +522,21 @@ def process_exercise_data(n_clicks, selected_exercise_id, date, notes, reps, wei
         # if date is empty, use today's date
         if not date:
             date = datetime.date.today()
-        else:
-            # validate and parse the date
-            try:
-                date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
-            except ValueError:
-                return (
-                    "Invalid date format. Please use YYYY-MM-DD.",
-                    None,
-                    None,
-                    None,
-                )
 
         # make sure reps and weights are not None
         if reps is None or weights is None:
-            return "Please enter valid reps and weights.", None, None, None
+            return None, None, None, None
 
         # parse the reps and weights
         try:
             reps = [int(rep) for rep in reps.split(",")]
             weights = [float(weight) for weight in weights.split(",")]
         except ValueError:
-            return (
-                "Invalid reps or weights format. Please use comma-separated values.",
-                None,
-                None,
-                None,
-            )
+            return None, None, None, None
 
         # make sure the number of reps matches the number of weights
         if len(reps) != len(weights):
-            return "Mismatch in the number of reps and weights.", None, None, None
+            return None, None, None, None
 
         # create set_details
         set_details = list(zip(reps, weights))
@@ -558,12 +545,7 @@ def process_exercise_data(n_clicks, selected_exercise_id, date, notes, reps, wei
         save_exercise(selected_exercise_id, notes, date, set_details)
 
         # clear the inputs and return the success message
-        return (
-            "",
-            "",
-            "",
-            "",
-        )
+        return None, "", "", ""
 
 
 if __name__ == "__main__":
