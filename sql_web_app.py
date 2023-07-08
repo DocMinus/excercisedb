@@ -1,4 +1,4 @@
-"""V0.1.1"""
+"""V0.1.2"""
 
 import datetime
 
@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from src.db_classes import *
 
 # Initialize the database #
-# TODO this would have to be moved eventually but ok for now
+# TODO could eventually be moved, but ok for now
 # engine = create_engine("sqlite:///database/exercise_main.db")
 engine = create_engine("sqlite:///database/exercise_testing.db")
 Session = sessionmaker(bind=engine)
@@ -269,7 +269,7 @@ def get_latest_weight(user_id: int) -> float:
 
     # If there's a weight entry, return the weight, else return None
     if latest_weight_entry is not None:
-        return latest_weight_entry.weight
+        return f"Your latest weight entry {latest_weight_entry.weight} kg was recorded on {latest_weight_entry.date_recorded}."
     else:
         return None
 
@@ -296,9 +296,11 @@ def combined_weight_total_over_time(user_id: int) -> str:
 
     # Close the session
     session.close()
-
-    # Print the total weight lifted and the date since when
-    return f"Fun fact: Since {first_date}, you lifted a combined total of {total_weight} kg!"
+    if total_weight > 1000:
+        total_weight = round(total_weight / 1000, 2)
+        return f"Fun fact: Since {first_date}, you lifted a combined total of {total_weight} tons!"
+    else:
+        return f"Fun fact: Since {first_date}, you lifted a combined total of {total_weight} kg!"
 
 
 def create_excercise_day(excercise_id: int) -> bool:
@@ -349,7 +351,7 @@ app.layout = html.Div(
     [
         dcc.Interval(
             id="interval-component",
-            interval=10 * 1000,
+            interval=10 * 1000,  # 10 ms should suffice
             n_intervals=0,  # in milliseconds
         ),
         html.H1(f"Welcome {user_name}!"),
@@ -385,7 +387,6 @@ app.layout = html.Div(
             },
         ),
         html.Hr(),
-        # Placeholder for displaying exercise data
         html.Div(
             [
                 html.Div(id="exercise-data"),
@@ -429,7 +430,8 @@ def update_combined_weight_total(n):
     Output("latest-weight", "children"), Input("interval-component", "n_intervals")
 )
 def update_latest_weight(n):
-    return f"Your latest weight (by date): {get_latest_weight(user_id)}"
+    # return f"Your latest weight (by date): {get_latest_weight(user_id)} kg."
+    return get_latest_weight(user_id)
 
 
 # Intervall Update latest exercises
